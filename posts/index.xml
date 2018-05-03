@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Dan Jasnowski</title>
+    <link>https://naknode.github.io/posts/</link>
+    <description>Recent content in Posts on Dan Jasnowski</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 15 Aug 2014 14:05:57 -0500</lastBuildDate>
+    
+	<atom:link href="https://naknode.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Text Justification in Java</title>
+      <link>https://naknode.github.io/posts/text-justification-in-java/</link>
+      <pubDate>Fri, 15 Aug 2014 14:05:57 -0500</pubDate>
+      
+      <guid>https://naknode.github.io/posts/text-justification-in-java/</guid>
+      <description>This is a problem on LeetCode and the submission rate, as of August 2014, is 14% where of the 56,868 submissions only 7,954 were right. As you can see, this problem is a bit daunting. The trick is the math operators and when to use them. There’s many solutions to this but, for me, in Java, here&amp;rsquo;s a fun way to solve that.
+The Problem Given an array of words and a length L, format the text such that each line has exactly L characters and is fully (left and right) justified.</description>
+    </item>
+    
+    <item>
+      <title>Mysql Does Not Load Accents Despite Utf8</title>
+      <link>https://naknode.github.io/posts/mysql-does-not-load-accents-despite-utf8/</link>
+      <pubDate>Thu, 03 Apr 2014 14:03:36 -0500</pubDate>
+      
+      <guid>https://naknode.github.io/posts/mysql-does-not-load-accents-despite-utf8/</guid>
+      <description>Have you ever worked with a database that had data with accents? You&amp;rsquo;ve exhausted every option from the file encoding to the database collation to anything else yet you still get that pesky black diamond with the blasted question mark. What if I told you there was one more way?
+That way is the default character_set_server value. It&amp;rsquo;s most likely not utf8mb4 and most likely latin1.
+Run this query in the database:</description>
+    </item>
+    
+  </channel>
+</rss>

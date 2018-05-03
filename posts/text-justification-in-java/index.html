@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="author" content="Dan Jasnowski">
+    <meta name="description" content="Code Musings">
+    <meta name="keywords" content="blog,developer,php,js,laravel,vue,react">
+
+    <base href="https://naknode.github.io/">
+    <title>
+  Text Justification in Java · Dan Jasnowski
+</title>
+
+    <link rel="canonical" href="https://naknode.github.io/posts/text-justification-in-java/">
+
+    <link  rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700">
+    <link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
+    <link rel="stylesheet" href="https://naknode.github.io/css/style.min.css">
+
+    <link rel="icon" type="image/png" href="https://naknode.github.io/images/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="https://naknode.github.io/images/favicon-16x16.png" sizes="16x16">
+
+    
+
+    <meta name="generator" content="Hugo 0.40.2" />
+  </head>
+
+  <body>
+    <main class="wrapper">
+      <nav class="navigation">
+  <section class="container">
+    <a class="navigation-title" href="https://naknode.github.io/">
+      Dan Jasnowski
+    </a>
+    
+    <ul class="navigation-list float-right">
+      
+      <li class="navigation-item">
+        <a class="navigation-link" href="https://naknode.github.io/posts/">Blog</a>
+      </li>
+      
+      <li class="navigation-item">
+        <a class="navigation-link" href="https://naknode.github.io/about/">About</a>
+      </li>
+      
+    </ul>
+    
+  </section>
+</nav>
+
+
+      <div class="content">
+        
+  <section class="container post">
+  <article>
+    <header>
+      <h1 class="title">Text Justification in Java</h1>
+      <h2 class="date">August 15, 2014</h2>
+
+      
+    </header>
+
+    
+
+<p>This is a <a href="https://oj.leetcode.com/problems/text-justification/">problem</a> on LeetCode and the submission rate, as of August 2014, is 14%  where of the 56,868 submissions only 7,954 were right. As you can see, this problem is a bit daunting. The trick is the math operators and when to use them. There’s many solutions to this but, for me, in Java, here&rsquo;s a fun way to solve that.</p>
+
+<h1 id="the-problem">The Problem</h1>
+
+<p>Given an array of words and a length L, format the text such that each line has exactly L characters and is fully (left and right) justified.</p>
+
+<p>You should pack your words in a greedy approach; that is, pack as many words as you can in each line. Pad extra spaces ‘ ‘ when necessary so that each line has exactly L characters.</p>
+
+<p>Extra spaces between words should be distributed as evenly as possible. If the number of spaces on a line do not divide evenly between words, the empty slots on the left will be assigned more spaces than the slots on the right.</p>
+
+<p>For the last line of text, it should be left justified and no extra space is inserted between words.</p>
+
+<p>For example, take this array: <code>[&quot;This&quot;, &quot;is&quot;, &quot;an&quot;, &quot;example&quot;, &quot;of&quot;, &quot;text&quot;, &quot;justification.&quot;]</code>, and we&rsquo;ll want <strong>16</strong> characters in length.</p>
+
+<p>Return the formatted lines as:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4">[
+   &#34;This    is    an&#34;,
+   &#34;example  of text&#34;,
+   &#34;justification.  &#34;
+]</pre></div>
+<p><strong>Note:</strong> Each word is <em>guaranteed</em> not to exceed the length &ndash; which is 16 in this case.</p>
+
+<p><strong>Corner Cases:</strong> A line other than the last line might contain only one word. What should you do in this case? In this case, that line should be left-justified.</p>
+
+<h1 id="my-approach">My Approach</h1>
+
+<p>What’s the best approach here? Iterative is the approach as the input can be many lines and the length can be as long as 50 to 100. If we keep doing a recursive approach, eventually, we’d get a stackoverflow if we handle too many lines for processing. Keep in mind the processing time for all of this.</p>
+
+<p>So, first I create three <code>ListArray</code>. One to return, one to copy the <code>String[]</code> words, and one to use the words to use during the line justification.</p>
+
+<p>So then we check if the word length fits exactly into the <code>L</code> and from there, we simply add that there. If not (which usually it isn’t), we do a loop until a word fits and then check for the upcoming space. Usually the word fits with an upcoming space.</p>
+
+<p>So, if the word doesn’t fit the length, we cut it off there and continue with the justification. If the word fits with an upcoming space, we continue because we can assume another word is allowed to fit.</p>
+
+<p>We continue this process until 1 of 2 things happen:</p>
+
+<ul>
+<li>We run out of characters to process in the line (smooth fit = # of words and one space in between)</li>
+<li>The word length is longer than “characters left”</li>
+</ul>
+
+<p>Usually, we hit number 2 and then we begin the line justification. If number 1 is met, there is no need for justification because the line fits perfectly with one space between each word. However, like I said, usually #2 is met because smooth fits are rare.</p>
+
+<p>Before we move onto the function to justify the line, we check to see if there are any words left in the <code>ListArray</code> which has all of the words. If there are no words left, that signifies that we are on the last line and no text justification is needed other than a simple left justification.</p>
+
+<p>In <em>that</em> case, all you do is add the words like you would as a regular append function would. Then take the remaining length of the spaces left and add the spaces to the line to meet the <code>L</code> requirement.</p>
+
+<p>If not, we take the function and this is where the beauty happens. We use a <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/StringBuilder.html">StringBuilder</a> because StringBuilder is faster when performing concatenations. This is because when you concatenate a <code>String</code>, you are internally creating a new object every time since <code>String</code> is immutable (unable to be changed).</p>
+
+<p>So, in the function <code>createLine</code>, we get the string of words to justify, length of words of words, the length to use and if it’s the last line. If it is the last line, we do simply a left justify (which I explained before), if not we keep going.</p>
+
+<p>So when we keep going, we take the spaces by doing length of words combined minus length of the line (L). We take the number of spaces divided by the words total to get the number of spaces each word gets in between (even). Then we take the same variables (spaces/words total) and do the remainder math operator (%) to get the remaining left.</p>
+
+<p>The first loop adds the word to the <code>StringBuilder</code> and the next for loop adds the spaces each word gets. Finally, to achieve justification, we go through the remainder and add one space until the remainder is less than the words to add.</p>
+
+<p>What happens is that the justification goes from left to right (because English is read left to right) so place the odd spaces starting from the left. We add one from the remainder (of the decimal that was “each word gets x amount of spaces) until we are done.</p>
+
+<p>Once we are done, your line should be justified but to make sure, we cut the line to the length given, using setLength, to remove any trailing spaces and then return the StringBuilder.</p>
+
+<p>Once returned, the function ends and we parse the <code>StringBuilder</code> to a <code>String</code> (<code>.toString()</code>) and add it to the list to return. We clear the <code>toUse</code> list and set the <code>wordsUsed</code> to <code>0</code> and get it ready for the next iteration.</p>
+
+<p>We do this until we have no more words left in <code>wordsLeft</code> and after that, we will have a list full of justified lines ready to send back.</p>
+
+<h1 id="my-solution">My Solution</h1>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#fff;font-weight:bold">import</span> java.util.ArrayList;
+<span style="color:#fff;font-weight:bold">import</span> java.util.Arrays;
+<span style="color:#fff;font-weight:bold">import</span> java.util.List;
+
+
+<span style="color:#fff;font-weight:bold">public</span> <span style="color:#fff;font-weight:bold">class</span> main {
+
+    <span style="color:#fff;font-weight:bold">public</span> <span style="color:#fff;font-weight:bold">static</span> <span style="color:#fff;font-weight:bold">void</span> main(String[] args) {
+
+        String[] theText = {<span style="color:#0ff;font-weight:bold">&#34;This&#34;</span>, <span style="color:#0ff;font-weight:bold">&#34;is&#34;</span>, <span style="color:#0ff;font-weight:bold">&#34;an&#34;</span>, <span style="color:#0ff;font-weight:bold">&#34;example&#34;</span>, <span style="color:#0ff;font-weight:bold">&#34;of&#34;</span>, <span style="color:#0ff;font-weight:bold">&#34;text&#34;</span>, <span style="color:#0ff;font-weight:bold">&#34;justification.&#34;</span>}; <span style="color:#007f7f">// 18
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">//String[] theText = {&#34;What&#34;,&#34;must&#34;,&#34;be&#34;,&#34;shall&#34;,&#34;be.&#34;}; // 12
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">//String[] theText = {&#34;Listen&#34;,&#34;to&#34;,&#34;many,&#34;,&#34;speak&#34;,&#34;to&#34;,&#34;a&#34;,&#34;few.&#34;}; //  6
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">int</span> L = 18;
+        System.<span style="color:#007f7f">out</span>.<span style="color:#007f7f">println</span>(main.<span style="color:#007f7f">fullJustify</span>(theText, L));
+
+    }
+
+    <span style="color:#fff;font-weight:bold">public</span> <span style="color:#fff;font-weight:bold">static</span> List&lt;String&gt; fullJustify(String[] words, <span style="color:#fff;font-weight:bold">int</span> L) {
+
+        <span style="color:#007f7f">// First we create the list to send back
+</span><span style="color:#007f7f"></span>        List&lt;String&gt; list = <span style="color:#fff;font-weight:bold">new</span> ArrayList&lt;String&gt;(); <span style="color:#007f7f">// make a list every row
+</span><span style="color:#007f7f"></span>
+        <span style="color:#007f7f">// Then we create two more. wordsLeft = words left to use
+</span><span style="color:#007f7f"></span>        List&lt;String&gt; wordsLeft = <span style="color:#fff;font-weight:bold">new</span> ArrayList&lt;String&gt;(Arrays.<span style="color:#007f7f">asList</span>(words)); <span style="color:#007f7f">// words left to recover from
+</span><span style="color:#007f7f"></span>
+        <span style="color:#007f7f">// and the words to use in a current line
+</span><span style="color:#007f7f"></span>        List&lt;String&gt; toUse = <span style="color:#fff;font-weight:bold">new</span> ArrayList&lt;String&gt;();
+
+        <span style="color:#007f7f">// words used so loop knows how many words are left.
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">int</span> wordsUsed = 0;
+
+        <span style="color:#007f7f">// used to detect if on last line
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">boolean</span> lastLine = <span style="color:#fff;font-weight:bold">false</span>;
+
+        <span style="color:#007f7f">// if we receive a list with no words... we output the number of spaces
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">// as defined by L so L = 3 would output [   ]
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">if</span> (wordsLeft.<span style="color:#007f7f">get</span>(0).<span style="color:#007f7f">length</span>() == 0) {
+
+            <span style="color:#007f7f">// new string buffer to add the word
+</span><span style="color:#007f7f"></span>            StringBuffer noBuffer = <span style="color:#fff;font-weight:bold">new</span> StringBuffer(L);
+
+            <span style="color:#007f7f">// add spaces as dictated by L
+</span><span style="color:#007f7f"></span>            <span style="color:#fff;font-weight:bold">for</span> (<span style="color:#fff;font-weight:bold">int</span> addGhostSpaces = 0; addGhostSpaces &lt; L; addGhostSpaces++)
+                noBuffer.<span style="color:#007f7f">append</span>(<span style="color:#0ff;font-weight:bold">&#34; &#34;</span>);
+            list.<span style="color:#007f7f">add</span>(noBuffer.<span style="color:#007f7f">toString</span>());
+            <span style="color:#fff;font-weight:bold">return</span> list;
+        } <span style="color:#fff;font-weight:bold">else</span>{
+            <span style="color:#007f7f">// Normally, we do not so we do this instead.
+</span><span style="color:#007f7f"></span>            <span style="color:#007f7f">// Go through words left list while
+</span><span style="color:#007f7f"></span>            <span style="color:#007f7f">// there is still words in it
+</span><span style="color:#007f7f"></span>            <span style="color:#fff;font-weight:bold">while</span> (wordsLeft.<span style="color:#007f7f">size</span>() &gt; 0) {
+
+                <span style="color:#007f7f">// These variables help set the spaces, word index
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// and character values left to be analyzed
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">int</span> lengthTotalChars = 0;
+                <span style="color:#fff;font-weight:bold">int</span> spacesLeft = L;
+                <span style="color:#fff;font-weight:bold">int</span> charsTotal = 0;
+                <span style="color:#fff;font-weight:bold">int</span> i = 0;
+
+                <span style="color:#007f7f">// while we have spaces left, and
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// words used is MORE than the size of wordsLeft
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">while</span> (spacesLeft &gt; 0 &amp;&amp; wordsUsed &lt; wordsLeft.<span style="color:#007f7f">size</span>()) {
+                    <span style="color:#007f7f">// words length to detect if there&#39;s space
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// to fit into the L of the paragraph
+</span><span style="color:#007f7f"></span>                    <span style="color:#fff;font-weight:bold">int</span> getWordLength = wordsLeft.<span style="color:#007f7f">get</span>(i).<span style="color:#007f7f">length</span>();
+
+                    <span style="color:#007f7f">// To avoid negative numbers, if spaces left
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// is more than word length, that means no
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// room left so we sit it to 0
+</span><span style="color:#007f7f"></span>                    <span style="color:#fff;font-weight:bold">if</span> (spacesLeft &lt; getWordLength) spacesLeft = 0;
+
+                    <span style="color:#007f7f">// if space left is EQUAL to word length (smooth fit)
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// OR space left is MORE than word left (above it)
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// there is still room so we advance.
+</span><span style="color:#007f7f"></span>                    <span style="color:#fff;font-weight:bold">if</span> (spacesLeft &gt;= getWordLength) {
+
+                        <span style="color:#007f7f">// take space away from length of word
+</span><span style="color:#007f7f"></span>                        <span style="color:#007f7f">// for every character, add to characters total
+</span><span style="color:#007f7f"></span>                        <span style="color:#007f7f">// add to the ListArray called toUse for parsing
+</span><span style="color:#007f7f"></span>                        <span style="color:#007f7f">// lastly, take away wordsToGo and add one to wordsUsed
+</span><span style="color:#007f7f"></span>                        spacesLeft -= getWordLength;
+                        charsTotal += wordsLeft.<span style="color:#007f7f">get</span>(i).<span style="color:#007f7f">length</span>();
+                        toUse.<span style="color:#007f7f">add</span>(wordsLeft.<span style="color:#007f7f">get</span>(i));
+                        wordsUsed++;
+
+                        <span style="color:#007f7f">// if length of total chars (word length &amp; space)
+</span><span style="color:#007f7f"></span>                        <span style="color:#007f7f">// is LESS than length, we can continue adding
+</span><span style="color:#007f7f"></span>                        <span style="color:#007f7f">// to the variables
+</span><span style="color:#007f7f"></span>                        <span style="color:#fff;font-weight:bold">if</span> (lengthTotalChars &lt; L) {
+                            lengthTotalChars++;
+                            spacesLeft--;
+                        }
+                    }
+
+                    <span style="color:#007f7f">// we move onto the next
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// word so we +1 (i) the number
+</span><span style="color:#007f7f"></span>                    i++;
+                }
+
+                <span style="color:#007f7f">// we take the number of words left
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// and clear it from 0 tp that.
+</span><span style="color:#007f7f"></span>                wordsLeft.<span style="color:#007f7f">subList</span>(0, toUse.<span style="color:#007f7f">size</span>()).<span style="color:#007f7f">clear</span>();
+
+                <span style="color:#007f7f">// if we have no more words left, obviously
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// that means we are on the last line
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">if</span> (wordsLeft.<span style="color:#007f7f">size</span>() == 0) lastLine = <span style="color:#fff;font-weight:bold">true</span>;
+
+                <span style="color:#007f7f">// we now parse the line accordingly
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// and return the new justified string to add to List
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// toUse = words fitted in one line, L = length of paragraph
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// charsTotal = number of characters (excluding spaces)
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// lastLine == detect if on last line)
+</span><span style="color:#007f7f"></span>                list.<span style="color:#007f7f">add</span>(createLine(toUse, L, charsTotal, lastLine).<span style="color:#007f7f">toString</span>());
+
+                <span style="color:#007f7f">// we clear the toUse list after
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// every line is finished
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// and set the wordsUsed to 0.
+</span><span style="color:#007f7f"></span>                toUse.<span style="color:#007f7f">clear</span>();
+                wordsUsed = 0;
+            }
+
+            <span style="color:#007f7f">// after every word is finished parsing
+</span><span style="color:#007f7f"></span>            <span style="color:#007f7f">// we return the new list
+</span><span style="color:#007f7f"></span>            <span style="color:#fff;font-weight:bold">return</span> list;
+        }
+    }
+
+    <span style="color:#fff;font-weight:bold">public</span> <span style="color:#fff;font-weight:bold">static</span> StringBuffer createLine(List&lt;String&gt; s, <span style="color:#fff;font-weight:bold">int</span> lineLength, <span style="color:#fff;font-weight:bold">int</span> charsTotal, <span style="color:#fff;font-weight:bold">boolean</span> lastLine) {
+
+        <span style="color:#007f7f">// create a new StringBuffer for performance
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">// during string concatenation
+</span><span style="color:#007f7f"></span>        StringBuffer sb = <span style="color:#fff;font-weight:bold">new</span> StringBuffer(lineLength);
+
+        <span style="color:#007f7f">// Set the length of paragraph
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">int</span> spaceInAll = lineLength;
+
+        <span style="color:#007f7f">// set words total to use
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">int</span> wordsTotal = s.<span style="color:#007f7f">size</span>();
+
+        <span style="color:#007f7f">// if we&#39;re on the last line,
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">// we are going to left-justify instead
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">if</span> (lastLine) {
+            <span style="color:#fff;font-weight:bold">for</span> (<span style="color:#fff;font-weight:bold">int</span> spaceLoop = 0; spaceLoop &lt; s.<span style="color:#007f7f">size</span>(); spaceLoop++) {
+                <span style="color:#007f7f">// add append the string with the word and extra space
+</span><span style="color:#007f7f"></span>                sb.<span style="color:#007f7f">append</span>(s.<span style="color:#007f7f">get</span>(spaceLoop) + <span style="color:#0ff;font-weight:bold">&#34; &#34;</span>);
+                <span style="color:#fff;font-weight:bold">int</span> newWordLength = s.<span style="color:#007f7f">get</span>(spaceLoop).<span style="color:#007f7f">length</span>() + 1;
+                spaceInAll -= newWordLength;
+            }
+            <span style="color:#007f7f">// what remains gets appended with more spaces
+</span><span style="color:#007f7f"></span>            <span style="color:#007f7f">// until we run out of spaces
+</span><span style="color:#007f7f"></span>            <span style="color:#fff;font-weight:bold">for</span> (<span style="color:#fff;font-weight:bold">int</span> remainingLastSpace = 0; remainingLastSpace &lt; spaceInAll; remainingLastSpace++)
+                sb.<span style="color:#007f7f">append</span>(<span style="color:#0ff;font-weight:bold">&#34; &#34;</span>);
+        }<span style="color:#fff;font-weight:bold">else</span>{
+            <span style="color:#007f7f">// If not last line, we&#39;ll check if the whole
+</span><span style="color:#007f7f"></span>            <span style="color:#007f7f">// word takes up the whole line
+</span><span style="color:#007f7f"></span>            <span style="color:#fff;font-weight:bold">if</span> (s.<span style="color:#007f7f">get</span>(0).<span style="color:#007f7f">length</span>() == lineLength) {
+                <span style="color:#007f7f">// so we just append the word
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// without adding more spaces
+</span><span style="color:#007f7f"></span>                sb.<span style="color:#007f7f">append</span>(s.<span style="color:#007f7f">get</span>(0));
+            }<span style="color:#fff;font-weight:bold">else</span>{
+                <span style="color:#007f7f">// here&#39;s where the MAGIC happens
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// spaces is the paragraph divided by characters total
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">int</span> spaces = lineLength - charsTotal;
+
+                <span style="color:#007f7f">// lastToAdd = will say how many
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// words to use in the algorithm
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">int</span> lastToAdd;
+                <span style="color:#fff;font-weight:bold">if</span> (wordsTotal == 1) {
+                    <span style="color:#007f7f">// if we have 1 word
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// lastToAdd will obviously be 1
+</span><span style="color:#007f7f"></span>                    lastToAdd = wordsTotal;
+                } <span style="color:#fff;font-weight:bold">else</span> {
+                    <span style="color:#007f7f">// if not, it will be word total MINUS 1
+</span><span style="color:#007f7f"></span>                    lastToAdd = wordsTotal-1;
+                }
+
+                <span style="color:#007f7f">// number = get spaces divide by words
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// This is how many space breaks are in line
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">int</span> number = spaces/lastToAdd;
+
+                <span style="color:#007f7f">// get the remaining (if odd space breaks)
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// to add to the left-most for that &#34;justification&#34;
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">// example &#34;Hello   World!&#34;
+</span><span style="color:#007f7f"></span>                <span style="color:#007f7f">//  L=14    -----XXY------ [X = number, Y =toAdd_remain]
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">int</span> toAdd_remain = spaces%lastToAdd;
+
+                <span style="color:#007f7f">// every word, we iterate this loop
+</span><span style="color:#007f7f"></span>                <span style="color:#fff;font-weight:bold">for</span> (<span style="color:#fff;font-weight:bold">int</span> remainder = 0; remainder &lt; wordsTotal; remainder++) {
+                    <span style="color:#007f7f">// first we add the word to the StringBuffer
+</span><span style="color:#007f7f"></span>                    sb.<span style="color:#007f7f">append</span>(s.<span style="color:#007f7f">get</span>(remainder));
+                    <span style="color:#007f7f">// each word gets this mount of spaces
+</span><span style="color:#007f7f"></span>                    <span style="color:#fff;font-weight:bold">for</span> (<span style="color:#fff;font-weight:bold">int</span> sP = 0; sP &lt; number; sP++)
+                        sb.<span style="color:#007f7f">append</span>(<span style="color:#0ff;font-weight:bold">&#34; &#34;</span>);
+
+                    <span style="color:#007f7f">// if the loop is less than toAdd_remainder
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// that means we still have one more space
+</span><span style="color:#007f7f"></span>                    <span style="color:#007f7f">// to give to this word on the line
+</span><span style="color:#007f7f"></span>                    <span style="color:#fff;font-weight:bold">if</span> (remainder &lt; toAdd_remain) sb.<span style="color:#007f7f">append</span>(<span style="color:#0ff;font-weight:bold">&#34; &#34;</span>);
+                }
+            }
+        }
+
+        <span style="color:#007f7f">// Then we trim the sentence to the length
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">// by trimming the trailing added space
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">// so it fits exactly into the paragraph line
+</span><span style="color:#007f7f"></span>        sb.<span style="color:#007f7f">setLength</span>(lineLength);
+
+        <span style="color:#007f7f">// Readability for the console
+</span><span style="color:#007f7f"></span>        System.<span style="color:#007f7f">out</span>.<span style="color:#007f7f">println</span>(sb.<span style="color:#007f7f">toString</span>() + <span style="color:#0ff;font-weight:bold">&#34;| (&#34;</span> + sb.<span style="color:#007f7f">toString</span>().<span style="color:#007f7f">length</span>() + <span style="color:#0ff;font-weight:bold">&#34;)&#34;</span>);
+
+        <span style="color:#007f7f">// we return the newly-justified
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">// StringBuffer and we are finished
+</span><span style="color:#007f7f"></span>        <span style="color:#007f7f">// with the space parsing
+</span><span style="color:#007f7f"></span>        <span style="color:#fff;font-weight:bold">return</span> sb;
+    }
+}</code></pre></div>
+<p>Despite this being from 2014, I am posting this again on my new blog in 2017. Excuse any of my anti-design patterns in Java. :-)</p>
+
+  </article>
+
+  <br/>
+
+  
+  
+</section>
+
+      </div>
+
+      <footer class="footer">
+  <section class="container">
+    © 2018 · Powered by <a href="https://gohugo.io/">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/">Coder</a>.
+  </section>
+</footer>
+
+    </main>
+
+    
+
+  </body>
+
+</html>

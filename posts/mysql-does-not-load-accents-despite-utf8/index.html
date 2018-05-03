@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="author" content="Dan Jasnowski">
+    <meta name="description" content="Code Musings">
+    <meta name="keywords" content="blog,developer,php,js,laravel,vue,react">
+
+    <base href="https://naknode.github.io/">
+    <title>
+  Mysql Does Not Load Accents Despite Utf8 · Dan Jasnowski
+</title>
+
+    <link rel="canonical" href="https://naknode.github.io/posts/mysql-does-not-load-accents-despite-utf8/">
+
+    <link  rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700">
+    <link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
+    <link rel="stylesheet" href="https://naknode.github.io/css/style.min.css">
+
+    <link rel="icon" type="image/png" href="https://naknode.github.io/images/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="https://naknode.github.io/images/favicon-16x16.png" sizes="16x16">
+
+    
+
+    <meta name="generator" content="Hugo 0.40.2" />
+  </head>
+
+  <body>
+    <main class="wrapper">
+      <nav class="navigation">
+  <section class="container">
+    <a class="navigation-title" href="https://naknode.github.io/">
+      Dan Jasnowski
+    </a>
+    
+    <ul class="navigation-list float-right">
+      
+      <li class="navigation-item">
+        <a class="navigation-link" href="https://naknode.github.io/posts/">Blog</a>
+      </li>
+      
+      <li class="navigation-item">
+        <a class="navigation-link" href="https://naknode.github.io/about/">About</a>
+      </li>
+      
+    </ul>
+    
+  </section>
+</nav>
+
+
+      <div class="content">
+        
+  <section class="container post">
+  <article>
+    <header>
+      <h1 class="title">Mysql Does Not Load Accents Despite Utf8</h1>
+      <h2 class="date">April 3, 2014</h2>
+
+      
+    </header>
+
+    
+
+<p>Have you ever worked with a database that had data with accents? You&rsquo;ve exhausted every option from the file encoding to the database collation to anything else yet you still get that pesky black diamond with the blasted question mark. What if I told you there was one more way?</p>
+
+<p>That way is the default <code>character_set_server</code> value. It&rsquo;s most likely not <code>utf8mb4</code> and most likely <code>latin1</code>.</p>
+
+<p>Run this query in the database:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql&gt; <span style="color:#fff;font-weight:bold">show</span> variables <span style="color:#fff;font-weight:bold">like</span> <span style="color:#0ff;font-weight:bold">&#34;%character%&#34;</span>;
++<span style="color:#007f7f">--------------------------+----------------------------+
+</span><span style="color:#007f7f"></span>| Variable_name            | Value                      |
++<span style="color:#007f7f">--------------------------+----------------------------+
+</span><span style="color:#007f7f"></span>| character_set_client     | utf8                       |
+| character_set_connection | utf8                       |
+| character_set_database   | latin1                     |
+| character_set_filesystem | <span style="color:#fff;font-weight:bold">binary</span>                     |
+| character_set_results    | utf8                       |
+| character_set_server     | latin1                     |
+| character_set_system     | utf8                       |
+| character_sets_dir       | /usr/<span style="color:#fff;font-weight:bold">share</span>/mysql/charsets/ |
++<span style="color:#007f7f">--------------------------+----------------------------+
+</span><span style="color:#007f7f"></span><span style="color:#ff0;font-weight:bold">8</span> <span style="color:#fff;font-weight:bold">rows</span> <span style="color:#fff;font-weight:bold">in</span> <span style="color:#fff;font-weight:bold">set</span> (<span style="color:#ff0;font-weight:bold">0</span>.<span style="color:#ff0;font-weight:bold">00</span> sec)</code></pre></div>
+<p>Notice something fishy? Yep. It&rsquo;s that <code>latin1</code>. If the data coming from the database is <code>utf8</code>, how will <code>mysqld</code> handle it? <code>latin</code> style but since it&rsquo;s not the same &ndash; error. Let&rsquo;s change that to <code>utf8mb4</code>.</p>
+
+<h1 id="wait-a-minute-utf8mb4">Wait a minute, <code>utf8mb4</code>?</h1>
+
+<p>Since MySQL 5.5.3 you should use <a href="https://dev.mysql.com/doc/refman/5.5/en/charset-unicode-utf8mb4.html"><code>utf8mb4</code></a> rather than <code>utf8</code>. While they both refer to the UTF-8 encoding, the older <code>utf8</code> had a MySQL-specific limitation preventing use of characters numbered above 0xFFFD whereas <code>utf8mb4</code> was the refactored version.</p>
+
+<p>##Fixing it</p>
+
+<h3 id="1-set-default-character-set">1. Set default <code>character set</code></h3>
+
+<p>Run this SQL query to set <code>utf8mb4</code> as your default database character set:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#fff;font-weight:bold">ALTER</span> <span style="color:#fff;font-weight:bold">DATABASE</span> db_name <span style="color:#fff;font-weight:bold">CHARACTER</span> <span style="color:#fff;font-weight:bold">SET</span> utf8mb4;
+<span style="color:#fff;font-weight:bold">ALTER</span> <span style="color:#fff;font-weight:bold">DATABASE</span> db_name <span style="color:#fff;font-weight:bold">COLLATE</span> <span style="color:#0ff;font-weight:bold">&#39;utf8mb4_general_ci&#39;</span>;</code></pre></div>
+<p>If that didn&rsquo;t work &ndash; keep reading.</p>
+
+<h4 id="on-a-windows-machine">On a Windows machine?</h4>
+
+<p>When you run these queries on a database hosted in a Windows machine, you may run into trouble:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#fff;font-weight:bold">ALTER</span> <span style="color:#fff;font-weight:bold">DATABASE</span> db_name <span style="color:#fff;font-weight:bold">CHARACTER</span> <span style="color:#fff;font-weight:bold">SET</span> utf8mb4;
+<span style="color:#fff;font-weight:bold">ALTER</span> <span style="color:#fff;font-weight:bold">DATABASE</span> db_name <span style="color:#fff;font-weight:bold">COLLATE</span> <span style="color:#0ff;font-weight:bold">&#39;utf8mb4_general_ci&#39;</span>;</code></pre></div>
+<p>This is because of the way Windows locks their files. Nonetheless, we have one more way here:</p>
+
+<ol>
+<li>Dump that database (structure and content, no <code>CREATE</code> info)</li>
+<li>Drop that database</li>
+<li>Create a database with the <code>utf8mb4</code> character set and collation</li>
+<li>Import the dump into it</li>
+</ol>
+
+<p>Tiresome, I know. Did that work? No? Let&rsquo;s move on.</p>
+
+<h3 id="2-alter-the-my-cnf-config-file">2. Alter the <code>my.cnf</code> config file</h3>
+
+<p>You can append this to the configuration file that <code>mysql</code> uses. It should be in the <code>/etc/mysql</code> directory or somewhere there:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text">[mysqld]
+init_connect=&#39;SET collation_connection = utf8mb4_general_ci&#39;
+init_connect=&#39;SET NAMES utf8mb4&#39;
+character-set-server=utf8mb4
+collation-server=utf8mb4_general_ci
+skip-character-set-client-handshake</code></pre></div>
+<p>The most important line is <code>skip-character-set-client-handshake</code>. If the client requests a connection in <code>utf8</code>, it would still use <code>utf8mb4</code>. This is important because a lot of people still use <code>utf8</code>. If you want that fire emoji in your database, you need to have <code>utf8mb4</code>.</p>
+
+<p>This configuration tells <code>mysqld</code> what queries to run and what values are to be set. Simple stuff.</p>
+
+<p>Restart MySQL:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">sudo /etc/init.d/mysql restart</code></pre></div>
+<p>and there we have it:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql&gt; <span style="color:#fff;font-weight:bold">show</span> variables <span style="color:#fff;font-weight:bold">like</span> <span style="color:#0ff;font-weight:bold">&#34;%character%&#34;</span>;
++<span style="color:#007f7f">--------------------------+----------------------------+
+</span><span style="color:#007f7f"></span>| Variable_name            | Value                      |
++<span style="color:#007f7f">--------------------------+----------------------------+
+</span><span style="color:#007f7f"></span>| character_set_client     | utf8mb4                    |
+| character_set_connection | utf8mb4                    |
+| character_set_database   | utf8mb4                    |
+| character_set_filesystem | <span style="color:#fff;font-weight:bold">binary</span>                     |
+| character_set_results    | utf8mb4                    |
+| character_set_server     | utf8mb4                    |
+| character_set_system     | utf8                       |
+| character_sets_dir       | /usr/<span style="color:#fff;font-weight:bold">share</span>/mysql/charsets/ |
++<span style="color:#007f7f">--------------------------+----------------------------+
+</span><span style="color:#007f7f"></span><span style="color:#ff0;font-weight:bold">8</span> <span style="color:#fff;font-weight:bold">rows</span> <span style="color:#fff;font-weight:bold">in</span> <span style="color:#fff;font-weight:bold">set</span> (<span style="color:#ff0;font-weight:bold">0</span>.<span style="color:#ff0;font-weight:bold">03</span> sec)</code></pre></div>
+<p>Your database should should showing that fire emoji and those accented characters!</p>
+
+<h3 id="diagnostics">Diagnostics</h3>
+
+<p>To see the individual character set of a database, run this:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql&gt; <span style="color:#fff;font-weight:bold">show</span> <span style="color:#fff;font-weight:bold">create</span> <span style="color:#fff;font-weight:bold">database</span> db_name;
++<span style="color:#007f7f">----------+---------------------------------------------------------------+
+</span><span style="color:#007f7f"></span>| <span style="color:#fff;font-weight:bold">Database</span> | <span style="color:#fff;font-weight:bold">Create</span> <span style="color:#fff;font-weight:bold">Database</span>                                               |
++<span style="color:#007f7f">----------+---------------------------------------------------------------+
+</span><span style="color:#007f7f"></span>| fbdb     | <span style="color:#fff;font-weight:bold">CREATE</span> <span style="color:#fff;font-weight:bold">DATABASE</span> `fbdb` <span style="color:#007f7f">/*!40100 DEFAULT CHARACTER SET utf8 */</span> |
++<span style="color:#007f7f">----------+---------------------------------------------------------------+
+</span><span style="color:#007f7f"></span><span style="color:#ff0;font-weight:bold">1</span> <span style="color:#fff;font-weight:bold">row</span> <span style="color:#fff;font-weight:bold">in</span> <span style="color:#fff;font-weight:bold">set</span> (<span style="color:#ff0;font-weight:bold">0</span>.<span style="color:#ff0;font-weight:bold">00</span> sec)</code></pre></div>
+<p>This database would have been created with the default character set of utf8 due to your settings.</p>
+
+<p>You can also see which character sets are available to you based on the version of MySQL you carry:</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql">mysql&gt; <span style="color:#fff;font-weight:bold">show</span> <span style="color:#fff;font-weight:bold">collation</span> <span style="color:#fff;font-weight:bold">where</span> charset=<span style="color:#0ff;font-weight:bold">&#39;utf8mb4&#39;</span>;
++<span style="color:#007f7f">------------------------+---------+-----+---------+----------+---------+
+</span><span style="color:#007f7f"></span>| <span style="color:#fff;font-weight:bold">Collation</span>              | Charset | Id  | <span style="color:#fff;font-weight:bold">Default</span> | Compiled | Sortlen |
++<span style="color:#007f7f">------------------------+---------+-----+---------+----------+---------+
+</span><span style="color:#007f7f"></span>| utf8mb4_general_ci     | utf8mb4 |  <span style="color:#ff0;font-weight:bold">45</span> | Yes     | Yes      |       <span style="color:#ff0;font-weight:bold">1</span> |
+| utf8mb4_bin            | utf8mb4 |  <span style="color:#ff0;font-weight:bold">46</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">1</span> |
+| utf8mb4_unicode_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">224</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_icelandic_ci   | utf8mb4 | <span style="color:#ff0;font-weight:bold">225</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_latvian_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">226</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_romanian_ci    | utf8mb4 | <span style="color:#ff0;font-weight:bold">227</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_slovenian_ci   | utf8mb4 | <span style="color:#ff0;font-weight:bold">228</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_polish_ci      | utf8mb4 | <span style="color:#ff0;font-weight:bold">229</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_estonian_ci    | utf8mb4 | <span style="color:#ff0;font-weight:bold">230</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_spanish_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">231</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_swedish_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">232</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_turkish_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">233</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_czech_ci       | utf8mb4 | <span style="color:#ff0;font-weight:bold">234</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_danish_ci      | utf8mb4 | <span style="color:#ff0;font-weight:bold">235</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_lithuanian_ci  | utf8mb4 | <span style="color:#ff0;font-weight:bold">236</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_slovak_ci      | utf8mb4 | <span style="color:#ff0;font-weight:bold">237</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_spanish2_ci    | utf8mb4 | <span style="color:#ff0;font-weight:bold">238</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_roman_ci       | utf8mb4 | <span style="color:#ff0;font-weight:bold">239</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_persian_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">240</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_esperanto_ci   | utf8mb4 | <span style="color:#ff0;font-weight:bold">241</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_hungarian_ci   | utf8mb4 | <span style="color:#ff0;font-weight:bold">242</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_sinhala_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">243</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_german2_ci     | utf8mb4 | <span style="color:#ff0;font-weight:bold">244</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_croatian_ci    | utf8mb4 | <span style="color:#ff0;font-weight:bold">245</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_unicode_520_ci | utf8mb4 | <span style="color:#ff0;font-weight:bold">246</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
+| utf8mb4_vietnamese_ci  | utf8mb4 | <span style="color:#ff0;font-weight:bold">247</span> |         | Yes      |       <span style="color:#ff0;font-weight:bold">8</span> |
++<span style="color:#007f7f">------------------------+---------+-----+---------+----------+---------+
+</span><span style="color:#007f7f"></span><span style="color:#ff0;font-weight:bold">26</span> <span style="color:#fff;font-weight:bold">rows</span> <span style="color:#fff;font-weight:bold">in</span> <span style="color:#fff;font-weight:bold">set</span> (<span style="color:#ff0;font-weight:bold">0</span>.<span style="color:#ff0;font-weight:bold">00</span> sec)</code></pre></div>
+  </article>
+
+  <br/>
+
+  
+  
+</section>
+
+      </div>
+
+      <footer class="footer">
+  <section class="container">
+    © 2018 · Powered by <a href="https://gohugo.io/">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/">Coder</a>.
+  </section>
+</footer>
+
+    </main>
+
+    
+
+  </body>
+
+</html>
